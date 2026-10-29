@@ -371,6 +371,11 @@
       };
     },
     async mounted() {
+      // BW: register before any await, or a save loaded during the palette fetch fails with
+      // "No constant data found for this version 96". One constants bundle, generated from the mod by packages/bw-data
+      d2s.setConstantData(96, window.constants_96.constants); //1.10-1.14d
+      window.constants = window.constants_96.constants;
+
       if (window.palettes == undefined) {
         window.palettes = {};
         window.palettes["ACT1"] = [];
@@ -400,9 +405,6 @@
       // d2s.setConstantData(99, constants99); //2.5+ (D2R)
       // window.constants = constants99;
 
-      // BW: one constants bundle, generated from the mod by packages/bw-data
-      d2s.setConstantData(96, window.constants_96.constants); //1.10-1.14d
-      window.constants = window.constants_96.constants;
 
       // TODO(bw): runeword/unique/set packs need generateFixedMods and extra constant fields
       this.addBasesToItemPack(window.constants.armor_items, "Armor");

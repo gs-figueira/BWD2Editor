@@ -1,0 +1,8 @@
+{
+  "name": "bwd2editor-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Headless smoke test of the editor (system Firefox via WebDriver BiDi)",
+  "scripts": { "smoke": "node smoke.mjs" },
+  "dependencies": { "puppeteer-core": "^23.11.1" }
+}
