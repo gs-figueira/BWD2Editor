@@ -5,9 +5,11 @@
   "description": "Decompiles BlackWolf mod tables (.bin/.tbl) into the .txt set d2s consumes",
   "type": "module",
   "engines": {
-    "node": ">=23.6"
+    "node": ">=22.6 (run .ts with --experimental-strip-types on 22/24)"
   },
   "scripts": {
-    "txt": "node src/cli.ts ../../reference/mod-4.2.1/patch_d2 ../../build/mod-4.2.1/txt"
+    "txt": "node src/cli.ts ../../reference/mod-4.2.1/patch_d2 ../../build/mod-4.2.1/txt",
+    "constants": "node src/constants.ts ../../build/mod-4.2.1/txt ../../build/mod-4.2.1",
+    "roundtrip": "node src/roundtrip.ts ../../build/mod-4.2.1/constants.json ../../reference/saves/*.d2s"
   }
 }

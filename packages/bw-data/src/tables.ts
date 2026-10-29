@@ -70,7 +70,7 @@ export function toTsvText(tsv: Tsv): string {
 }
 
 export function playerClassTsv(classes: BinRecord[]): Tsv {
-  return { header: ["Player Class", "Code"], rows: classes.map((c) => [c.code as string, c.code as string]) };
+  return { header: ["Player Class", "Code"], rows: classes.map((c) => [(c.code as string).trim(), (c.code as string).trim()]) };
 }
 
 export function charStatsTsv(recs: BinRecord[], strings: StringTable): Tsv {

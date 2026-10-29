@@ -45,10 +45,17 @@ export async function readAttributes(char: types.ID2S, reader: BitReader, consta
       throw new Error(`Invalid attribute id: ${id}`);
     }
     const size = field.cB;
-    char.attributes[Attributes[field.s]] = reader.ReadUInt32(size);
-    //current_hp - max_stamina need to be bit shifted
-    if (id >= 6 && id <= 11) {
-      char.attributes[Attributes[field.s]] >>>= 8;
+    const value = reader.ReadUInt32(size);
+    const name = Attributes[field.s];
+    if (id > 15 || !name) {
+      // mod stats saved on the character (unknown meaning): keep raw for write-back
+      (char.extra_attributes = char.extra_attributes || []).push([id, value]);
+    } else if (id >= 6 && id <= 11) {
+      //current_hp - max_stamina need to be bit shifted
+      char.attributes[name] = value >>> 8;
+      (char.attribute_fractions = char.attribute_fractions || {})[id] = value & 0xff;
+    } else {
+      char.attributes[name] = value;
     }
     bitoffset += size;
     id = reader.ReadUInt16(9);
@@ -71,10 +78,18 @@ export async function writeAttributes(char: types.ID2S, constants: types.IConsta
     }
     const size = property.cB;
     if (i >= 6 && i <= 11) {
-      value <<= 8;
+      value = ((value << 8) | (char.attribute_fractions?.[i] ?? 0)) >>> 0;
     }
     writer.WriteUInt16(i, 9);
     writer.WriteUInt32(value, size);
+  }
+  for (const [id, value] of char.extra_attributes || []) {
+    const property = constants.magical_properties[id];
+    if (property === undefined) {
+      throw new Error(`Invalid attribute id: ${id}`);
+    }
+    writer.WriteUInt16(id, 9);
+    writer.WriteUInt32(value, property.cB);
   }
   writer.WriteUInt16(0x1ff, 9);
   writer.Align();
@@ -82,7 +97,7 @@ export async function writeAttributes(char: types.ID2S, constants: types.IConsta
 }
 
 //nokkas names
-const Attributes = {
+const Attributes: { [stat: string]: string } = {
   strength: "strength",
   energy: "energy",
   dexterity: "dexterity",

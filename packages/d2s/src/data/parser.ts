@@ -16,10 +16,14 @@ function readConstantData(buffers: any): types.IConstantData {
   const constants = {} as types.IConstantData;
 
   let strings = {};
-  if (_hasKey(buffers, "strings.txt")) {
+  if (_hasKey(buffers, "string.txt")) {
     strings = _readStrings(_getKey(buffers, "string.txt"));
     strings = Object.assign(strings, _readStrings(_getKey(buffers, "expansionstring.txt")));
     strings = Object.assign(strings, _readStrings(_getKey(buffers, "patchstring.txt")));
+    // mod string tables without a global id range (e.g. BaseMod.tbl): only fill missing keys
+    if (_hasKey(buffers, "BaseMod.txt")) {
+      strings = Object.assign(_readStrings(_getKey(buffers, "BaseMod.txt")), strings);
+    }
   } else {
     strings = _readJSONStrings(_getKey(buffers, "item-gems.json"));
     strings = Object.assign(strings, _readJSONStrings(_getKey(buffers, "item-modifiers.json")));
@@ -32,6 +36,7 @@ function readConstantData(buffers: any): types.IConstantData {
   constants.classes = _readClasses(_getArray(buffers, "CharStats.txt"), _getArray(buffers, "PlayerClass.txt"), strings);
   const skillDescs = _readSkillDesc(_getArray(buffers, "SkillDesc.txt"), strings);
   constants.skills = _readSkills(_getArray(buffers, "skills.txt"), skillDescs, strings);
+  _addClassSkills(constants.classes, constants.skills);
   constants.rare_names = [null].concat(_readRareNames(_getArray(buffers, "RareSuffix.txt"), 1, strings));
   constants.rare_names = constants.rare_names.concat(
     _readRareNames(_getArray(buffers, "RarePrefix.txt"), constants.rare_names.length, strings)
@@ -203,7 +208,8 @@ function _readSkills(tsv: any, skillDescs: any, strings: any): any[] {
   for (let i = 1; i < tsv.lines.length; i++) {
     const id = +tsv.lines[i][cId];
     const skillDesc = tsv.lines[i][cSkillDesc];
-    if (skillDesc) {
+    // class skills need an entry even without a skilldesc: each one has a byte in the save
+    if (skillDesc || tsv.lines[i][cCharclass]) {
       const o = {} as any;
       if (skillDescs[skillDesc]) o.s = skillDescs[skillDesc];
       if (tsv.lines[i][cCharclass]) o.c = tsv.lines[i][cCharclass];
@@ -211,6 +217,18 @@ function _readSkills(tsv: any, skillDescs: any, strings: any): any[] {
     }
   }
   return arr;
+}
+
+// Skill ids of each class in ascending order: the save's "if" section has one byte per id.
+// Vanilla is 30 contiguous ids per class, but mods may reassign them (BlackWolf: 31, with gaps).
+function _addClassSkills(classes: any[], skills: any[]) {
+  for (const clazz of classes) {
+    const ids = [] as number[];
+    skills.forEach((skill, id) => {
+      if (skill && skill.c === clazz.c) ids.push(id);
+    });
+    clazz.sk = ids;
+  }
 }
 
 function _readRareNames(tsv: any, idx: number, strings: any): any[] {
@@ -285,7 +303,8 @@ function _readRunewords(tsv: any, strings: any): any[] {
   const cName = tsv.header.indexOf("Name");
   for (let i = 1; i < tsv.lines.length; i++) {
     const name = tsv.lines[i][cName];
-    if (name) {
+    // TODO(bw): vanilla-only id mapping; mod rows like "cRuneword167" are skipped until verified
+    if (name && /^Runeword\d+$/.test(name)) {
       let id = +name.substring(8);
       //TODO: why?
       if (id > 75) {

@@ -4,6 +4,7 @@ import { readAttributes, writeAttributes } from "./attributes";
 import { BitReader } from "../binary/bitreader";
 import { BitWriter } from "../binary/bitwriter";
 import { readSkills, writeSkills } from "./skills";
+import { readModSections, writeModSections } from "./mod_sections";
 import * as items from "./items";
 import { getConstantData } from "./constants";
 import { enhanceAttributes, enhanceItems } from "./attribute_enhancer";
@@ -28,6 +29,7 @@ async function read(buffer: Uint8Array, constants?: types.IConstantData, userCon
   }
   await readHeaderData(char, reader, constants);
   await readAttributes(char, reader, constants);
+  await readModSections(char, reader, constants);
   await readSkills(char, reader, constants);
   await items.readCharItems(char, reader, constants, config);
   await items.readCorpseItems(char, reader, constants, config);
@@ -68,6 +70,7 @@ async function write(data: types.ID2S, constants?: types.IConstantData, userConf
   }
   writer.WriteArray(await writeHeaderData(data, constants));
   writer.WriteArray(await writeAttributes(data, constants));
+  writer.WriteArray(await writeModSections(data));
   writer.WriteArray(await writeSkills(data, constants));
   writer.WriteArray(await items.writeCharItems(data, constants, config));
   writer.WriteArray(await items.writeCorpseItem(data, constants, config));

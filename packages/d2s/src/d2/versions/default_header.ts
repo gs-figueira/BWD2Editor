@@ -4,6 +4,28 @@ import { BitWriter } from "../../binary/bitwriter";
 
 const difficulties = ["normal", "nm", "hell"];
 
+// d2s's models drop bits it doesn't understand (unknown header bytes, quest flags) and map
+// skills by name (ambiguous in mods). Keep each block's original bytes and re-encode it only
+// if the user changed the parsed value.
+function _keep(char: types.ID2S, block: string, bytes: Uint8Array, value: unknown) {
+  const raw = (char.header._raw = char.header._raw || {});
+  raw[block] = { bytes: Array.from(bytes), json: JSON.stringify(value ?? null) };
+}
+
+function _emit(char: types.ID2S, block: string, value: unknown, encode: () => Uint8Array): Uint8Array {
+  const raw = char.header._raw?.[block];
+  if (raw && raw.json === JSON.stringify(value ?? null)) {
+    return Uint8Array.from(raw.bytes);
+  }
+  return encode();
+}
+
+function _u32(value: number): Uint8Array {
+  const b = new Uint8Array(4);
+  new DataView(b.buffer).setUint32(0, value >>> 0, true);
+  return b;
+}
+
 export function readHeader(char: types.ID2S, reader: BitReader, constants: types.IConstantData) {
   char.header.filesize = reader.ReadUInt32(); //0x0008
   char.header.checksum = reader.ReadUInt32().toString(16).padStart(8, "0"); //0x000c
@@ -19,16 +41,19 @@ export function readHeader(char: types.ID2S, reader: BitReader, constants: types
   char.header.progression = reader.ReadUInt8(); //0x0025
   char.header.active_arms = reader.ReadUInt16(); //0x0026 [unk = 0x0, 0x0]
   char.header.class = constants.classes[reader.ReadUInt8()]!.n; //0x0028
-  reader.SkipBytes(2); //0x0029 [unk = 0x10, 0x1E]
+  _keep(char, "unk_0x29", reader.ReadArray(2), null); //0x0029 [unk = 0x10, 0x1E]
   char.header.level = reader.ReadUInt8(); //0x002b
   char.header.created = reader.ReadUInt32(); //0x002c
   char.header.last_played = reader.ReadUInt32(); //0x0030
   reader.SkipBytes(4); //0x0034 [unk = 0xff, 0xff, 0xff, 0xff]
-  char.header.assigned_skills = _readAssignedSkills(reader.ReadArray(64), constants); //0x0038
-  char.header.left_skill = constants.skills[reader.ReadUInt32()]?.s; //0x0078
-  char.header.right_skill = constants.skills[reader.ReadUInt32()]?.s; //0x007c
-  char.header.left_swap_skill = constants.skills[reader.ReadUInt32()]?.s; //0x0080
-  char.header.right_swap_skill = constants.skills[reader.ReadUInt32()]?.s; //0x0084
+  const assigned = reader.ReadArray(64);
+  char.header.assigned_skills = _readAssignedSkills(assigned, constants); //0x0038
+  _keep(char, "assigned_skills", assigned, char.header.assigned_skills);
+  for (const hand of ["left_skill", "right_skill", "left_swap_skill", "right_swap_skill"] as const) {
+    const id = reader.ReadUInt32(); //0x0078 0x007c 0x0080 0x0084
+    char.header[hand] = constants.skills[id]?.s;
+    _keep(char, hand, _u32(id), char.header[hand]);
+  }
   char.header.menu_appearance = _readCharMenuAppearance(reader.ReadArray(32), constants); //0x0088 [char menu appearance]
   char.header.difficulty = _readDifficulty(reader.ReadArray(3)); //0x00a8
   char.header.map_id = reader.ReadUInt32(); //0x00ab
@@ -38,13 +63,16 @@ export function readHeader(char: types.ID2S, reader: BitReader, constants: types
   char.header.merc_name_id = reader.ReadUInt16(); //0x00b7
   char.header.merc_type = reader.ReadUInt16(); //0x00b9
   char.header.merc_experience = reader.ReadUInt32(); //0x00bb
-  reader.SkipBytes(144); //0x00bf [unk]
+  // D2R (>0x61) stores the name at 0x010b inside this block
+  _keep(char, "unk_0x00bf", reader.ReadArray(144), char.header.version > 0x61 ? char.header.name : null); //0x00bf [unk]
   reader.SkipBytes(4); //0x014f [quests header identifier = 0x57, 0x6f, 0x6f, 0x21 "Woo!"]
   reader.SkipBytes(4); //0x0153 [version = 0x6, 0x0, 0x0, 0x0]
   reader.SkipBytes(2); //0x0153 [quests header length = 0x2a, 0x1]
-  char.header.quests_normal = _readQuests(reader.ReadArray(96)); //0x0159
-  char.header.quests_nm = _readQuests(reader.ReadArray(96)); //0x01b9
-  char.header.quests_hell = _readQuests(reader.ReadArray(96)); //0x0219
+  for (const q of ["quests_normal", "quests_nm", "quests_hell"] as const) {
+    const bytes = reader.ReadArray(96); //0x0159 0x01b9 0x0219
+    char.header[q] = _readQuests(bytes);
+    _keep(char, q, bytes, char.header[q]);
+  }
   reader.SkipBytes(2); //0x0279 [waypoint header identifier = 0x57, 0x53 "WS"]
   reader.SkipBytes(4); //0x027b [waypoint header version = 0x1, 0x0, 0x0, 0x0]
   reader.SkipBytes(2); //0x027f [waypoint header length = 0x50, 0x0]
@@ -72,16 +100,24 @@ export function writeHeader(char: types.ID2S, writer: BitWriter, constants: type
     .WriteUInt8(char.header.progression) //0x0025
     .WriteUInt16(char.header.active_arms) //0x0026
     .WriteUInt8(_classId(char.header.class, constants)) //0x0028
-    .WriteArray(new Uint8Array([0x10, 0x1e])) //0x0029
+    .WriteArray(_emit(char, "unk_0x29", null, () => new Uint8Array([0x10, 0x1e]))) //0x0029
     .WriteUInt8(char.header.level) //0x002b
     .WriteArray(new Uint8Array([0x00, 0x00, 0x00, 0x00])) //0x002c
     .WriteUInt32(char.header.last_played) //0x0030
     .WriteArray(new Uint8Array([0xff, 0xff, 0xff, 0xff])) //0x0034
-    .WriteArray(_writeAssignedSkills(char.header.assigned_skills, constants)) //0x0038
-    .WriteUInt32(_skillId(char.header.left_skill, constants)) //0x0078
-    .WriteUInt32(_skillId(char.header.right_skill, constants)) //0x007c
-    .WriteUInt32(_skillId(char.header.left_swap_skill, constants)) //0x0080
-    .WriteUInt32(_skillId(char.header.right_swap_skill, constants)) //0x0084
+    .WriteArray(
+      _emit(char, "assigned_skills", char.header.assigned_skills, () =>
+        _writeAssignedSkills(char.header.assigned_skills, constants)
+      )
+    ) //0x0038
+    .WriteArray(_emit(char, "left_skill", char.header.left_skill, () => _u32(_skillId(char.header.left_skill, constants)))) //0x0078
+    .WriteArray(_emit(char, "right_skill", char.header.right_skill, () => _u32(_skillId(char.header.right_skill, constants)))) //0x007c
+    .WriteArray(
+      _emit(char, "left_swap_skill", char.header.left_swap_skill, () => _u32(_skillId(char.header.left_swap_skill, constants)))
+    ) //0x0080
+    .WriteArray(
+      _emit(char, "right_swap_skill", char.header.right_swap_skill, () => _u32(_skillId(char.header.right_swap_skill, constants)))
+    ) //0x0084
     .WriteArray(_writeCharMenuAppearance(char.header.menu_appearance, constants)) //0x0088 [char menu appearance]
     .WriteArray(_writeDifficulty(char.header.difficulty)) //0x00a8
     .WriteUInt32(char.header.map_id) //0x00ab
@@ -93,22 +129,31 @@ export function writeHeader(char: types.ID2S, writer: BitWriter, constants: type
     .WriteUInt32(char.header.merc_experience); //0x00bb
 
   if (char.header.version > 0x61) {
-    writer
-      .WriteArray(new Uint8Array(76)) //0x00bf [unk]
-      .WriteString(char.header.name, 16) //0x010b
-      .WriteArray(new Uint8Array(52)); //0x011b [unk]
+    writer.WriteArray(
+      _emit(char, "unk_0x00bf", char.header.name, () =>
+        new BitWriter()
+          .WriteArray(new Uint8Array(76)) //0x00bf [unk]
+          .WriteString(char.header.name, 16) //0x010b
+          .WriteArray(new Uint8Array(52)) //0x011b [unk]
+          .ToArray()
+      )
+    );
   } else {
-    writer
-      .WriteArray(new Uint8Array(140)) //0x00bf [unk]
-      .WriteUInt32(0x1); //0x014b [unk = 0x1, 0x0, 0x0, 0x0]
+    writer.WriteArray(
+      _emit(char, "unk_0x00bf", null, () => {
+        const b = new Uint8Array(144); //0x00bf [unk]
+        b[140] = 0x1; //0x014b [unk = 0x1, 0x0, 0x0, 0x0]
+        return b;
+      })
+    );
   }
 
   writer
     .WriteString("Woo!", 4) //0x014f [quests = 0x57, 0x6f, 0x6f, 0x21 "Woo!"]
     .WriteArray(new Uint8Array([0x06, 0x00, 0x00, 0x00, 0x2a, 0x01])) //0x0153 [unk = 0x6, 0x0, 0x0, 0x0, 0x2a, 0x1]
-    .WriteArray(_writeQuests(char.header.quests_normal)) //0x0159
-    .WriteArray(_writeQuests(char.header.quests_nm)) //0x01b9
-    .WriteArray(_writeQuests(char.header.quests_hell)) //0x0219
+    .WriteArray(_emit(char, "quests_normal", char.header.quests_normal, () => _writeQuests(char.header.quests_normal))) //0x0159
+    .WriteArray(_emit(char, "quests_nm", char.header.quests_nm, () => _writeQuests(char.header.quests_nm))) //0x01b9
+    .WriteArray(_emit(char, "quests_hell", char.header.quests_hell, () => _writeQuests(char.header.quests_hell))) //0x0219
     .WriteString("WS", 2) //0x0279 [waypoint data = 0x57, 0x53 "WS"]
     .WriteArray(new Uint8Array([0x01, 0x00, 0x00, 0x00, 0x50, 0x00])) //0x027b [unk = 0x1, 0x0, 0x0, 0x0, 0x50, 0x0]
     .WriteArray(_writeWaypointData(char.header.waypoints)) //0x0281

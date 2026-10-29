@@ -31,6 +31,12 @@ export interface ID2S {
   merc_items: IItem[];
   golem_item: IItem;
   is_dead: number;
+  /** raw bytes of mod-specific sections between "gf" and "if" (BlackWolf: XS/IK), written back as-is */
+  mod_sections?: number[];
+  /** saved stats d2s has no name for, kept in save order: [statId, rawValue] */
+  extra_attributes?: [number, number][];
+  /** low 8 bits (fraction) of hp/mana/stamina stats 6..11, by stat id */
+  attribute_fractions?: { [id: number]: number };
 }
 
 export interface IAttributes {
@@ -254,7 +260,15 @@ export interface IWaypointData {
   hell: IWaypoints;
 }
 
+/** original bytes of a header block plus a snapshot of its parsed value (see default_header.ts) */
+export interface IRawBlock {
+  bytes: number[];
+  json: string;
+}
+
 export interface IHeader {
+  /** lossless round-trip: header blocks are re-encoded only when their parsed value changed */
+  _raw?: { [block: string]: IRawBlock };
   identifier: string;
   checksum: string;
   name: string;
