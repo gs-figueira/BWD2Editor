@@ -57,6 +57,7 @@ export async function enhanceItems(
 }
 
 export function enhanceItem(item: types.IItem, constants: types.IConstantData, level = 1, config?: types.IConfig, parent?: types.IItem) {
+  _refreshNames(item, constants);
   if (parent) {
     //socket item.
     const pt = constants.armor_items[parent.type] || constants.weapon_items[parent.type] || constants.other_items[item.type];
@@ -593,4 +594,14 @@ function _groupAttributes(all_attributes: types.IMagicProperty[], constants: typ
     }
   }
   return combined_magic_attributes;
+}
+
+// BW: ids can be changed in the editor; keep the derived names in sync
+function _refreshNames(item: types.IItem, constants: types.IConstantData) {
+  if (item.magic_prefix !== undefined) item.magic_prefix_name = constants.magic_prefixes[item.magic_prefix]?.n ?? null;
+  if (item.magic_suffix !== undefined) item.magic_suffix_name = constants.magic_suffixes[item.magic_suffix]?.n ?? null;
+  if (item.set_id !== undefined) item.set_name = constants.set_items[item.set_id]?.n ?? null;
+  if (item.unique_id !== undefined) item.unique_name = constants.unq_items[item.unique_id]?.n ?? null;
+  if (item.rare_name_id !== undefined) item.rare_name = constants.rare_names[item.rare_name_id]?.n ?? null;
+  if (item.rare_name_id2 !== undefined) item.rare_name2 = constants.rare_names[item.rare_name_id2]?.n ?? null;
 }

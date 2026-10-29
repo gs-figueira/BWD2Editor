@@ -42,7 +42,7 @@ export default {
       stats: window.constants.magical_properties,
       stats_options: window.constants.magical_properties
         .filter(stat => stat && stat.s)
-        .map(stat => ({value: stat.id, label: stat.s, desc: stat.dP || ""})),
+        .map(stat => ({value: stat.id, label: utils.statLabel(stat), desc: stat.dP || ""})),
       skills_options: window.constants.skills
         .filter((skill) => skill && skill.s)
         .map((skill) => ({ value: skill.id, label: `${skill.s}${skill.id > 5 && !skill.c ? " (item)" : ""}` }))

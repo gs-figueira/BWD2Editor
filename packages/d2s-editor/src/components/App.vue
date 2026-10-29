@@ -766,6 +766,11 @@
         }
 
         if (!item.magic_attributes) item.magic_attributes = [];
+        // BW: switching quality in the editor leaves the new quality's ids undefined
+        if (item.quality == 4) { item.magic_prefix ??= 0; item.magic_suffix ??= 0; }
+        if (item.quality == 5) item.set_id ??= 0;
+        if (item.quality == 7) item.unique_id ??= 0;
+        if (item.quality == 6 || item.quality == 8) { item.rare_name_id ??= 1; item.rare_name_id2 ??= 1; }
         item.src = await utils.b64PNGFromDC6(item);
         if (!item.socketed_items) {
           return;

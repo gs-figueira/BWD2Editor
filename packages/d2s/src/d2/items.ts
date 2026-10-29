@@ -389,7 +389,8 @@ export async function writeItem(
         writer.WriteUInt8(item.rare_name_id !== undefined ? item.rare_name_id : _lookupRareId(item.rare_name, constants), 8);
         writer.WriteUInt8(item.rare_name_id2 !== undefined ? item.rare_name_id2 : _lookupRareId(item.rare_name2, constants), 8);
         for (let i = 0; i < 6; i++) {
-          const magical_name_id = item.magical_name_ids[i];
+          // BW: items switched to rare/crafted in the editor have no affix slots yet
+          const magical_name_id = item.magical_name_ids?.[i];
           if (magical_name_id) {
             writer.WriteBit(1);
             writer.WriteUInt16(magical_name_id, 11);

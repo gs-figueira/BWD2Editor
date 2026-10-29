@@ -75,6 +75,23 @@ function readConstantData(buffers: any): types.IConstantData {
   });
   _readGems(constants.other_items, _getArray(buffers, "Gems.txt"), strings);
 
+  // the editor (written against the D2R constants) addresses entries by their id field
+  for (const list of [
+    constants.classes,
+    constants.skills,
+    constants.rare_names,
+    constants.magic_prefixes,
+    constants.magic_suffixes,
+    constants.magical_properties,
+    constants.runewords,
+    constants.set_items,
+    constants.unq_items,
+  ]) {
+    list.forEach((entry: any, id: number) => {
+      if (entry) entry.id = id;
+    });
+  }
+
   return constants;
 }
 
@@ -411,6 +428,10 @@ function _readItems(tsv: any, itemtypes: any, strings: any): any[] {
   const cNormCode = tsv.header.indexOf("normcode");
   const cUberCode = tsv.header.indexOf("ubercode");
   const cUltraCode = tsv.header.indexOf("ultracode");
+  const cGemsockets = tsv.header.indexOf("gemsockets");
+  const cSpawnable = tsv.header.indexOf("spawnable");
+  const cNodurability = tsv.header.indexOf("nodurability");
+  const cLevel = tsv.header.indexOf("level");
 
   for (let i = 1; i < tsv.lines.length; i++) {
     const code = tsv.lines[i][cCode];
@@ -447,6 +468,11 @@ function _readItems(tsv: any, itemtypes: any, strings: any): any[] {
       if (tsv.lines[i][cInvwidth]) item.iw = +tsv.lines[i][cInvwidth];
       if (tsv.lines[i][cInvheight]) item.ih = +tsv.lines[i][cInvheight];
       if (tsv.lines[i][cInvtransform]) item.it = +tsv.lines[i][cInvtransform];
+      item.type = tsv.lines[i][cType];
+      if (cGemsockets >= 0) item.gemsockets = +tsv.lines[i][cGemsockets] || 0;
+      if (cSpawnable >= 0) item.spawnable = +tsv.lines[i][cSpawnable] || 0;
+      if (cNodurability >= 0) item.nodurability = +tsv.lines[i][cNodurability] || 0;
+      if (cLevel >= 0) item.level = +tsv.lines[i][cLevel] || 0;
       const type = itemtypes[tsv.lines[i][cType]];
       if (type && type.ig) {
         item.ig = type.ig;
@@ -508,6 +534,17 @@ function _readSetOrUnqItems(tsv: any, strings: any): any[] {
   let cCode = tsv.header.indexOf("code");
   if (cCode < 0) cCode = tsv.header.indexOf("item");
   const cInvtransform = tsv.header.indexOf("invtransform");
+  const cLvl = tsv.header.indexOf("lvl");
+  // fixed mods: prop1..prop12 (UniqueItems) / prop1..prop9 (SetItems, own stats only)
+  const cProps = [] as { prop: number; par: number; min: number; max: number }[];
+  for (let j = 1; tsv.header.indexOf(`prop${j}`) >= 0; j++) {
+    cProps.push({
+      prop: tsv.header.indexOf(`prop${j}`),
+      par: tsv.header.indexOf(`par${j}`),
+      min: tsv.header.indexOf(`min${j}`),
+      max: tsv.header.indexOf(`max${j}`),
+    });
+  }
   let id = 0;
   for (let i = 1; i < tsv.lines.length; i++) {
     const index = tsv.lines[i][cIndex];
@@ -517,6 +554,18 @@ function _readSetOrUnqItems(tsv: any, strings: any): any[] {
       if (tsv.lines[i][cInvfile]) o.i = tsv.lines[i][cInvfile];
       if (tsv.lines[i][cCode]) o.c = tsv.lines[i][cCode];
       if (tsv.lines[i][cInvtransform]) o.tc = tsv.lines[i][cInvtransform];
+      if (cLvl >= 0 && tsv.lines[i][cLvl]) o.lvl = +tsv.lines[i][cLvl];
+      const mods = [] as any[];
+      for (const c of cProps) {
+        const prop = tsv.lines[i][c.prop];
+        if (!prop) continue;
+        const m = { prop: prop } as any;
+        if (tsv.lines[i][c.par]) m.par = isNaN(+tsv.lines[i][c.par]) ? tsv.lines[i][c.par] : +tsv.lines[i][c.par];
+        if (tsv.lines[i][c.min]) m.min = +tsv.lines[i][c.min];
+        if (tsv.lines[i][c.max]) m.max = +tsv.lines[i][c.max];
+        mods.push(m);
+      }
+      if (mods.length) o.m = mods;
       arr[id] = o;
       id++;
     }

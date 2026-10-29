@@ -222,7 +222,8 @@
           @item-selected="onSelect"
           @item-event="onEvent"
           :id="'InventoryGrid'"
-          class="equippedInventoryGrid"
+          :contextMenu="contextMenu"
+          class="equippedInventoryGrid">
     </Grid>
   </div>
 

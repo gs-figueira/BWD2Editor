@@ -36,6 +36,16 @@
             <multiselect v-model.number="item.magic_suffix" :options="magic_suffixes_options" :searchable="true"
               :canDeselect="false" :canClear="false" :required="true" @update:model-value="onEvent('update')" />
           </li>
+          <li v-if="item.quality == 7">
+            <label>Unique:</label>
+            <multiselect v-model.number="item.unique_id" :options="uniqueOptions" :searchable="true"
+              :canDeselect="false" :canClear="false" :required="true" @update:model-value="onEvent('update')" />
+          </li>
+          <li v-if="item.quality == 5">
+            <label>Set item:</label>
+            <multiselect v-model.number="item.set_id" :options="setOptions" :searchable="true"
+              :canDeselect="false" :canClear="false" :required="true" @update:model-value="onEvent('update')" />
+          </li>
           <li v-if="item.quality == 6 || item.quality == 8">
             <label>Prefix:</label>
             <multiselect v-model.number="item.rare_name_id" :options="rare_names_options" :searchable="true"
@@ -238,6 +248,15 @@ export default {
           return maxsockets;
       }
     },  
+    optionsForBase(list, currentId) {
+      const entries = list.filter(e => e && e.n);
+      const own = entries.filter(e => e.c === this.item.type || e.id === currentId);
+      const rest = entries.filter(e => !own.includes(e));
+      return [
+        ...own.map(e => ({ value: e.id, label: e.n })),
+        ...rest.map(e => ({ value: e.id, label: `${e.n} [${e.c}]` })),
+      ];
+    },
     itemCanEthereal() {
       //SET
       if (this.item.quality == 5) return false;
@@ -269,6 +288,13 @@ export default {
     }
   },
   computed: {
+    // BW: several uniques/set items can share a base; list the ones for this base first
+    uniqueOptions() {
+      return this.optionsForBase(window.constants.unq_items, this.item.unique_id);
+    },
+    setOptions() {
+      return this.optionsForBase(window.constants.set_items, this.item.set_id);
+    },
   }
 };  
 </script>

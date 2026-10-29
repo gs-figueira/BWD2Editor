@@ -22,6 +22,16 @@ const colors = {
   bwht: 20,
 };
 
+// BW: "+# to All Skills (item_allskills)" instead of the bare ItemStatCost code
+function statLabel(stat) {
+  const desc = (stat.dP || stat.dgP || "")
+    .replace(/ÿc./g, "")
+    .replace(/\\n|\n/g, " ")
+    .replace(/%\+?d|%s|%\d/g, "#")
+    .trim();
+  return desc ? `${desc} (${stat.s})` : stat.s;
+}
+
 // BW: inventory/stash/cube sizes come from the mod's inventory.txt (constants.bw.grids)
 function grids() {
   const g = window.constants_96?.constants?.bw?.grids;
@@ -44,6 +54,7 @@ export default {
   colors: colors,
   colormaps: colormaps,
   grids: grids,
+  statLabel: statLabel,
   b64ToArrayBuffer(base64) {
     var bin = window.atob(base64);
     var len = bin.length;

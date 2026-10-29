@@ -1063,3 +1063,6 @@ div.settings .form-check-input {
   outline: 1px solid rgba(160, 140, 100, 0.25);
   outline-offset: -1px;
 }
+/* BW: mod names are long; don't truncate affix/unique/stat selects */
+.item-options .multiselect { min-width: 260px; }
+.item-stats .col-md-3 { flex: 0 0 auto; max-width: none; min-width: 340px; }
