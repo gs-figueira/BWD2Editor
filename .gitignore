@@ -1,0 +1,7 @@
+# Game data extracted from Blizzard/mod MPQs — regenerate with tools/extract_mpq.py, never commit
+reference/mod-*/
+reference/vanilla-*/
+node_modules/
+dist/
+__pycache__/
+.venv/
