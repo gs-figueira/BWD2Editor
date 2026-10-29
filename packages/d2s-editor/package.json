@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve --skip-plugins @vue/cli-plugin-eslint" ,
+    "serve": "vue-cli-service serve --skip-plugins @vue/cli-plugin-eslint",
     "build": "vue-cli-service build --skip-plugins @vue/cli-plugin-eslint",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "@dschu012/d2s": "^2.0.36",
+    "@dschu012/d2s": "file:../d2s",
     "@popperjs/core": "^2.11.8",
     "@vueform/multiselect": "^2.6.6",
     "core-js": "^3.35.0",

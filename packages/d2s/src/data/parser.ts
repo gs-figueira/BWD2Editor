@@ -34,8 +34,9 @@ function readConstantData(buffers: any): types.IConstantData {
   }
 
   constants.classes = _readClasses(_getArray(buffers, "CharStats.txt"), _getArray(buffers, "PlayerClass.txt"), strings);
-  const skillDescs = _readSkillDesc(_getArray(buffers, "SkillDesc.txt"), strings);
-  constants.skills = _readSkills(_getArray(buffers, "skills.txt"), skillDescs, strings);
+  const skillDescTsv = _getArray(buffers, "SkillDesc.txt");
+  const skillDescs = _readSkillDesc(skillDescTsv, strings);
+  constants.skills = _readSkills(_getArray(buffers, "skills.txt"), skillDescs, strings, _readSkillPages(skillDescTsv));
   _addClassSkills(constants.classes, constants.skills);
   constants.rare_names = [null].concat(_readRareNames(_getArray(buffers, "RareSuffix.txt"), 1, strings));
   constants.rare_names = constants.rare_names.concat(
@@ -197,7 +198,19 @@ function _readSkillDesc(tsv: any, strings: any): any {
   return arr;
 }
 
-function _readSkills(tsv: any, skillDescs: any, strings: any): any[] {
+// skill tree tab (1-3) of each skilldesc, 0 when the skill isn't shown in a tree
+function _readSkillPages(tsv: any): any {
+  const pages = {} as any;
+  const cSkillDesc = tsv.header.indexOf("skilldesc");
+  const cPage = tsv.header.indexOf("SkillPage");
+  for (let i = 1; i < tsv.lines.length; i++) {
+    const id = tsv.lines[i][cSkillDesc];
+    if (id && cPage >= 0) pages[id] = +tsv.lines[i][cPage] || 0;
+  }
+  return pages;
+}
+
+function _readSkills(tsv: any, skillDescs: any, strings: any, skillPages: any = {}): any[] {
   const arr = [] as any[];
   const cSkillDesc = tsv.header.indexOf("skilldesc");
   let cId = tsv.header.indexOf("Id");
@@ -212,6 +225,7 @@ function _readSkills(tsv: any, skillDescs: any, strings: any): any[] {
     if (skillDesc || tsv.lines[i][cCharclass]) {
       const o = {} as any;
       if (skillDescs[skillDesc]) o.s = skillDescs[skillDesc];
+      if (skillPages[skillDesc]) o.p = skillPages[skillDesc];
       if (tsv.lines[i][cCharclass]) o.c = tsv.lines[i][cCharclass];
       arr[id] = o;
     }

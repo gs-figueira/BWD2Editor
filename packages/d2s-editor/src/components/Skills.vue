@@ -1,12 +1,13 @@
 <template>
   <div>
     <div class="form-row">
-      <div class="col-md-4" v-for="i in 3">
+      <!-- BW: one column per skill tree tab; mods can have more than 10 skills per tab -->
+      <div class="col-md-4" v-for="page in pages" :key="page.page">
         <div class="row">
-          <div class="col-md-6" v-for="j in 10">
-            <label :for="'Skill' + i + '_' + j">{{save.skills[(i - 1) * 10 + (j - 1)].name}}</label>
-            <input type="number" class="form-control" :id="'Skill' + i + '_' + j" min="0" max="20"
-                    v-model.number="save.skills[(i - 1) * 10 + (j - 1)].points">
+          <div class="col-md-6" v-for="skill in page.skills" :key="skill.id">
+            <label :for="'Skill' + skill.id">{{skill.name || ('Skill #' + skill.id)}}</label>
+            <input type="number" class="form-control" :id="'Skill' + skill.id" min="0" max="255"
+                    v-model.number="skill.points">
           </div>
         </div>
       </div>
@@ -17,7 +18,7 @@
         <div class="input-group-prepend">
           <button type="button" class="btn btn-secondary" @click="setAll()">Set All To</button>
         </div>
-        <input type="number" min="0" max="20" v-model="allSkills"/>
+        <input type="number" min="0" max="255" v-model="allSkills"/>
       </div>
     </div>
   </div>
@@ -31,6 +32,20 @@
     data() {
       return {
         allSkills: null
+      }
+    },
+    computed: {
+      pages() {
+        const byPage = {};
+        for (const skill of this.save.skills) {
+          const page = skill.page || 0;
+          (byPage[page] = byPage[page] || []).push(skill);
+        }
+        // vanilla order: tab 1 is the rightmost in game, but keep 1-2-3 and untabbed skills last
+        return Object.keys(byPage)
+          .map(Number)
+          .sort((a, b) => (a || 99) - (b || 99))
+          .map(page => ({ page, skills: byPage[page] }));
       }
     },
     methods: {

@@ -19,6 +19,7 @@ export async function readSkills(char: types.ID2S, reader: BitReader, constants:
       id: id,
       points: reader.ReadUInt8(),
       name: constants.skills[id]?.s,
+      page: constants.skills[id]?.p ?? 0,
     } as types.ISkill);
   }
 }

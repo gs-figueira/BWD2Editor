@@ -312,6 +312,8 @@ export interface ISkill {
   id: number;
   points: number;
   name: string;
+  /** skill tree tab 1-3 (skilldesc SkillPage), 0 if not in a tree */
+  page?: number;
 }
 
 export interface IItem {

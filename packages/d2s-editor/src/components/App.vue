@@ -97,7 +97,8 @@
                     </div>
                   </div>
 
-                  <nav class="navbar navbar-expand-md navbar-light">
+                  <!-- BW: prebuilt D2R characters don't apply to the mod -->
+                  <nav v-if="false" class="navbar navbar-expand-md navbar-light">
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                       <ul class="navbar-nav mr-auto">
                         <li class="nav-item">
@@ -295,7 +296,6 @@
                       </div>
                       <div class="row mt-3">
                         <button type="button" id="d2" class="btn btn-primary" @click="saveFile(0x60)">Save D2</button>
-                        <button type="button" id="d2r" class="btn btn-primary" @click="saveFile(0x63)">Save D2R</button>
                       </div>
                     </div>
                   </div>
@@ -326,7 +326,6 @@
   import ItemEditor from './inventory/ItemEditor.vue';
   import Stash from './inventory/Stash.vue';
 
-  import ItemPack from '../d2/ItemPack.js';
   import CharPack from '../d2/CharPack.js';
   import utils from '../utils.js';
   import {itemGroups as itemGroups} from '../items.js';
@@ -357,7 +356,8 @@
         stashData: null,
         activeTab: 1,
         selected: null,
-        itempack: ItemPack,
+        // BW: ItemPack.js holds prebuilt D2R items; the pack is built from the mod constants instead
+        itempack: [],
         previewModel: null,
         preview: null,
         baseModel: null,
@@ -365,7 +365,7 @@
         clipboard: null,
         load: null,
         notifications: [],
-        grid: { inv: { w: 10, h: 4 }, stash: { w: 10, h: 10 }, cube: { w: 3, h: 4 } },
+        grid: utils.grids(),
         location: {},
         theme: localStorage.getItem('theme')
       };
@@ -374,7 +374,7 @@
       if (window.palettes == undefined) {
         window.palettes = {};
         window.palettes["ACT1"] = [];
-        let response = await fetch(`data/global/palette/ACT1/pal.dat`);
+        let response = await fetch(`data/global/palette/act1/pal.dat`);
         let buffer = new Uint8Array(await response.arrayBuffer());
         for (let i = 0; i < 256; i += 1) {
           window.palettes["ACT1"].push([buffer[i * 3 + 2], buffer[i * 3 + 1], buffer[i * 3]]);
@@ -388,8 +388,8 @@
           }
         }
       }
-      if (localStorage.grid) {
-        this.grid = JSON.parse(localStorage.getItem('grid'));
+      if (localStorage.bw_grid) {
+        this.grid = JSON.parse(localStorage.getItem('bw_grid'));
       }
 
       //TODO: requreid additional fields in constants
@@ -400,15 +400,11 @@
       // d2s.setConstantData(99, constants99); //2.5+ (D2R)
       // window.constants = constants99;
 
+      // BW: one constants bundle, generated from the mod by packages/bw-data
       d2s.setConstantData(96, window.constants_96.constants); //1.10-1.14d
-      d2s.setConstantData(97, window.constants_96.constants); //alpha? (D2R)
-      d2s.setConstantData(98, window.constants_96.constants); //2.4 (D2R)
-      d2s.setConstantData(99, window.constants_99.constants); //2.5+ (D2R)
-      window.constants = window.constants_99.constants;
+      window.constants = window.constants_96.constants;
 
-      this.addRunewordToItemPack(window.constants.runewords, "Runewords");
-      this.addUniqToItemPack(window.constants.unq_items, "Uniques");
-      this.addSetToItemPack(window.constants.set_items, "Sets");
+      // TODO(bw): runeword/unique/set packs need generateFixedMods and extra constant fields
       this.addBasesToItemPack(window.constants.armor_items, "Armor");
       this.addBasesToItemPack(window.constants.weapon_items, "Weapons");
       this.addOtherToItemPack(window.constants.other_items, "Misc");
@@ -498,7 +494,7 @@
         this.$refs.contextMenu.close();
       },
       gridChange() {
-        localStorage.setItem('grid', JSON.stringify(this.grid));
+        localStorage.setItem('bw_grid', JSON.stringify(this.grid));
       },
       changeTab(i) {
         this.activeTab = i;
@@ -531,7 +527,7 @@
         this.location = null;
       },
       async shareItem(item) {
-        let bytes = await d2s.writeItem(item, 0x63);
+        let bytes = await d2s.writeItem(item, 0x60);
         let base64 = utils.arrayBufferToBase64(bytes);
         navigator.clipboard.writeText(base64);
         this.notifications.push({ alert: "alert alert-info", message: `Item data copied to clipboard. Use load from string to share it with someone.` });
@@ -626,7 +622,7 @@
         if (this.previewModel) {
           if (this.previewModel.base64) {
             let bytes = utils.b64ToArrayBuffer(this.previewModel.base64);
-            this.preview = await d2s.readItem(bytes, 0x63);
+            this.preview = await d2s.readItem(bytes, 0x60);
           } else if (this.previewModel.item) {
             this.preview = this.previewModel.item;
             if (this.preview?.given_runeword) {

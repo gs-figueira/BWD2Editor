@@ -80,6 +80,7 @@
 <script>
 import Item from './Item.vue';
 import Grid from './Grid.vue';
+import utils from '../../utils.js';
 import ContextMenu from "../ContextMenu.vue";
 
 export default {
@@ -92,7 +93,7 @@ export default {
   data() {
     return {
       activeTab: 1,
-      grid: {stash: {w: 10, h: 10}},
+      grid: utils.grids(),
     };
   },
   props: {

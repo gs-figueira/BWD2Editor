@@ -1,7 +1,8 @@
 // const Dotenv = require('dotenv-webpack')
 
 module.exports = {
-  outputDir : './docs',
+  // BW: build output is not versioned (it embeds game data from public/)
+  outputDir : './dist',
   pwa: {
     iconPaths: {
       faviconSVG: null,

@@ -1042,3 +1042,24 @@ div.settings .form-check-input {
 .h-20 {
   height: 640px;
 }
+
+/* BW: the mod's grids are bigger than vanilla (inventory 10x5, cube 5x5); let the
+   panels grow past the vanilla background art instead of clipping the last row/column. */
+.inventory {
+  height: auto;
+  min-height: calc(var(--grid-size) * 12);
+  padding-bottom: 12px;
+  background-color: #0e0e0e;
+}
+.cube {
+  width: auto;
+  height: auto;
+  display: inline-block;
+  padding: 0 20px 20px 0;
+  background: #0e0e0e;
+}
+/* vanilla background art only paints the vanilla cells; outline every cell so the extra ones show */
+.d2p-InventoryGrid > .cell > .cell {
+  outline: 1px solid rgba(160, 140, 100, 0.25);
+  outline-offset: -1px;
+}

@@ -22,18 +22,28 @@ const colors = {
   bwht: 20,
 };
 
+// BW: inventory/stash/cube sizes come from the mod's inventory.txt (constants.bw.grids)
+function grids() {
+  const g = window.constants_96?.constants?.bw?.grids;
+  return g
+    ? { inv: { ...g.inventory }, stash: { ...g.stash }, cube: { ...g.cube } }
+    : { inv: { w: 10, h: 4 }, stash: { w: 10, h: 10 }, cube: { w: 3, h: 4 } };
+}
+
+// BW: lowercase paths, matching tools/extract_gfx.py output
 const colormaps = {
-  1: 'data/global/items/Palette/grey.dat',
-  2: 'data/global/items/Palette/grey2.dat',
-  5: 'data/global/items/Palette/greybrown.dat',
-  6: 'data/global/items/Palette/invgrey.dat',
-  7: 'data/global/items/Palette/invgrey2.dat',
-  8: 'data/global/items/Palette/invgreybrown.dat',
+  1: 'data/global/items/palette/grey.dat',
+  2: 'data/global/items/palette/grey2.dat',
+  5: 'data/global/items/palette/greybrown.dat',
+  6: 'data/global/items/palette/invgrey.dat',
+  7: 'data/global/items/palette/invgrey2.dat',
+  8: 'data/global/items/palette/invgreybrown.dat',
 };
 
 export default {
   colors: colors,
   colormaps: colormaps,
+  grids: grids,
   b64ToArrayBuffer(base64) {
     var bin = window.atob(base64);
     var len = bin.length;
@@ -53,7 +63,7 @@ export default {
     return window.btoa(binary);
   },
   async b64PNGFromDC6(item) {
-    const response = await fetch(`data/global/items/${item.inv_file}.dc6`, { signal: AbortSignal.timeout(1500) });
+    const response = await fetch(`data/global/items/${item.inv_file.toLowerCase()}.dc6`, { signal: AbortSignal.timeout(1500) });
     if (response.status !== 200) {
       return null;
     }

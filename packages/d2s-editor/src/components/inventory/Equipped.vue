@@ -239,6 +239,7 @@
 <script>
 import Item from './Item.vue'
 import Grid from './Grid.vue'
+import utils from '../../utils.js'
 import ItemEditor from './ItemEditor.vue'
 
 export default {
@@ -251,7 +252,7 @@ export default {
     return {
       // selected: null,
       alt_displayed: false,
-      grid: {inv: {w: 10, h: 4}},
+      grid: utils.grids(),
     };
   },
   computed: {
