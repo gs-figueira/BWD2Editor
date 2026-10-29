@@ -1063,13 +1063,22 @@
         let newItems = [];
         for (const item of Object.entries(constants)) {
           const value = item[1];
+          // BW: only compactsave items are simple; rings/amulets/charms/jewels need quality + stats
+          const simple = value.cs === undefined ? 1 : value.cs;
           newItems.push({
             //code
             type: item[0],
-            simple_item: 1,
+            simple_item: simple,
             categories: value.c,
             ethereal: 0,
-            identified: 1
+            identified: 1,
+            ...(simple ? {} : {
+              quality: value.s ? 2 : 4,
+              level: 41,
+              magic_prefix: 0,
+              magic_suffix: 0,
+              magic_attributes: [],
+            }),
           });
         }
         d2s.enhanceItems(newItems, window.constants);

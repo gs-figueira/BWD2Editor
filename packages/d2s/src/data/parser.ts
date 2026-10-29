@@ -432,6 +432,7 @@ function _readItems(tsv: any, itemtypes: any, strings: any): any[] {
   const cSpawnable = tsv.header.indexOf("spawnable");
   const cNodurability = tsv.header.indexOf("nodurability");
   const cLevel = tsv.header.indexOf("level");
+  const cCompactsave = tsv.header.indexOf("compactsave");
 
   for (let i = 1; i < tsv.lines.length; i++) {
     const code = tsv.lines[i][cCode];
@@ -473,6 +474,8 @@ function _readItems(tsv: any, itemtypes: any, strings: any): any[] {
       if (cSpawnable >= 0) item.spawnable = +tsv.lines[i][cSpawnable] || 0;
       if (cNodurability >= 0) item.nodurability = +tsv.lines[i][cNodurability] || 0;
       if (cLevel >= 0) item.level = +tsv.lines[i][cLevel] || 0;
+      // compactsave=1: saved as a "simple" item (no quality/stats); rings, amulets, charms, jewels are 0
+      if (cCompactsave >= 0) item.cs = +tsv.lines[i][cCompactsave] || 0;
       const type = itemtypes[tsv.lines[i][cType]];
       if (type && type.ig) {
         item.ig = type.ig;
