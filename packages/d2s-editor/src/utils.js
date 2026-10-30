@@ -34,6 +34,8 @@ function stripD2Colors(text) {
 
 // BW: "+# to All Skills (item_allskills)" instead of the bare ItemStatCost code
 function statLabel(stat) {
+  // descfunc 14 = class skill tab (grand charms): its text is just the first tab of class 0
+  if (stat.dF == 14) return `+# to [class] skill tab Skills — grand charm (${stat.s})`;
   const desc = (stat.dP || stat.dgP || "")
     .replace(/ÿc./g, "")
     .replace(/\\n|\n/g, " ")

@@ -12,7 +12,7 @@
           <multiselect v-model.number="stat.values[valIdx-1]" :options="classes.map(charClass => ({value: charClass.id, label: charClass.co}))" :searchable="true" :canDeselect="false" :canClear="false" @update:model-value="onItemModified"/>
         </template>
         <template v-else-if="isClassSkill(stat.id, valIdx)">
-          <multiselect v-model.number="stat.values[valIdx-1]" :options="[0, 1, 2].map(idx2 => ({value: idx2, label: classes[stat.values[valIdx]].ts[idx2]}))" :searchable="true" :canDeselect="false" :canClear="false" @update:model-value="onItemModified"/>
+          <multiselect v-model.number="stat.values[valIdx-1]" :options="[0, 1, 2].map(idx2 => ({value: idx2, label: (classes[stat.values[valIdx]]?.ts[idx2] || ('Tab ' + idx2)).replace(/^\+%d to /, '')}))" :searchable="true" :canDeselect="false" :canClear="false" @update:model-value="onItemModified"/>
         </template>
         <template v-else-if="isSkill(stat.id, valIdx)">
           <multiselect v-model.number="stat.values[valIdx-1]" :options="skills_options" :searchable="true" :canDeselect="false" :canClear="false" @update:model-value="onItemModified"/>
