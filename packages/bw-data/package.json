@@ -1,6 +1,7 @@
 {
   "name": "@bwd2editor/bw-data",
   "version": "0.1.0",
+  "license": "MIT",
   "private": true,
   "description": "Decompiles BlackWolf mod tables (.bin/.tbl) into the .txt set d2s consumes",
   "type": "module",

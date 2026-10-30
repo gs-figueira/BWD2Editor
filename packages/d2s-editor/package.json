@@ -1,6 +1,7 @@
 {
   "name": "ds2-editor",
   "version": "0.1.0",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve --skip-plugins @vue/cli-plugin-eslint",

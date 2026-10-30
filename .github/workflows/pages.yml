@@ -48,6 +48,11 @@ jobs:
           test -f public/d2/constants_bw.bundle.js || { echo "::error::constants_bw.bundle.js missing — run tools/build_editor_data.sh and commit it"; exit 1; }
           npm ci --ignore-scripts
           npx vue-cli-service build --skip-plugins @vue/cli-plugin-eslint
+          # license notices travel with the published bundles (they contain d2s / d2s-editor code)
+          mkdir -p dist/licenses
+          cp ../../LICENSE dist/licenses/LICENSE.txt
+          cp ../d2s/LICENSE dist/licenses/d2s-LICENSE.txt
+          cp LICENSE dist/licenses/d2s-editor-LICENSE.txt
 
       - name: guard — no game files in the published site
         working-directory: packages/d2s-editor/dist

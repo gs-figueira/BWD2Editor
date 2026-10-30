@@ -63,9 +63,20 @@ Com os arquivos do jogo extraídos localmente, o editor local também mostra a a
 ### Deploy
 A cada push na `main`, o GitHub Actions (`.github/workflows/pages.yml`) compila o d2s, roda os testes, compila o editor, verifica que nenhum arquivo do jogo entrou no build e publica no GitHub Pages.
 
-## Créditos e licenças
+## Licença
 
-- [dschu012/d2s](https://github.com/dschu012/d2s) (ISC) e [dschu012/d2s-editor](https://github.com/dschu012/d2s-editor) (MIT), base deste projeto. As licenças originais estão nas respectivas pastas em `packages/`.
+Este projeto é distribuído sob a **licença MIT** (veja [LICENSE](LICENSE)).
+
+Ele inclui versões modificadas de código de terceiros, que mantêm suas licenças originais:
+
+- [dschu012/d2s](https://github.com/dschu012/d2s), licença ISC ([packages/d2s/LICENSE](packages/d2s/LICENSE))
+- [dschu012/d2s-editor](https://github.com/dschu012/d2s-editor), licença MIT ([packages/d2s-editor/LICENSE](packages/d2s-editor/LICENSE))
+
+As modificações feitas neste repositório seguem a licença MIT.
+
+## Créditos
+
+- [dschu012](https://github.com/dschu012), autor do d2s e do d2s-editor, a base deste projeto.
 - Estruturas de dados de referência: [D2MOO](https://github.com/ThePhrozenKeep/D2MOO).
 - Publicado com autorização da administração do BlackWolf.
 

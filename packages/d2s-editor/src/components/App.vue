@@ -6,7 +6,8 @@
       <div class="octicon octicon-clippy navbar-brand">
         <span class="font-weight-bold">BWD2Editor</span>
         <small class="text-muted ml-2">BlackWolf offline character editor · based on
-          <a href="https://github.com/dschu012/d2s-editor" target="_blank" rel="noopener">dschu012/d2s-editor</a></small>
+          <a href="https://github.com/dschu012/d2s-editor" target="_blank" rel="noopener">dschu012/d2s-editor</a>
+          · MIT · <a href="licenses/LICENSE.txt" target="_blank" rel="noopener">Licenses</a></small>
       </div>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
