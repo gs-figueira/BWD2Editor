@@ -333,7 +333,7 @@ function _readProperties(tsv: any, strings: any): any {
 }
 
 // Saved runeword id (12 bits) -> Runes.txt row. Two id spaces, told apart by the 4 bits after
-// the id (item.runeword_flags), verified on BlackWolf saves (docs/findings.md "Runewords"):
+// the id (item.runeword_flags), verified on game-written BlackWolf saves:
 //  - flags 5 (vanilla): id from the "RunewordN" name: N + 26, or N + 25 above 75 (no Runeword75)
 //  - flags 3 (BlackWolf corrupted runes): id = Runes.txt data row index - 82
 const CORRUPTED_RUNEWORD_ROW_OFFSET = 82;

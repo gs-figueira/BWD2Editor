@@ -10,3 +10,9 @@ build/
 packages/d2s-editor/public/d2/
 packages/d2s-editor/public/data/
 packages/d2s/dist/
+
+# Private, never published: Claude's project notes, reverse-engineering findings,
+# roadmap, the user's character saves and repo backups (kept on disk only)
+CLAUDE.md
+notes/
+reference/saves/
