@@ -42,6 +42,7 @@
 
 <script>
   import tippy from 'tippy.js';
+  import utils from '../../utils.js';
 
   export default {
     name: 'Item',
@@ -155,26 +156,26 @@
           name = `${name} ${rare_name2}`;
         }
         const personalizedName = item.personalized_name ? `${item.personalized_name}'s ` : '';
-        if (item.set_id) {
+        // BW: id 0 is a valid set/unique; check quality instead of id truthiness
+        if (item.quality == 5 && item.set_id !== undefined) {
           let set_name = constants.set_items[item.set_id]
           ? constants.set_items[item.set_id].n
           : null
           name = `${name}\\n${personalizedName}${set_name}`;
         }
-        if (item.unique_id) {
+        if (item.quality == 7 && item.unique_id !== undefined) {
           let unique_name = constants.unq_items[item.unique_id]
           ? constants.unq_items[item.unique_id].n
           : null
           name = `${name}\\n${personalizedName}${unique_name}`;
         }
-        if (item.runeword_id) {
-          let runeword_name = constants.runewords[item.runeword_id]
-          ? constants.runewords[item.runeword_id].n
-          : null
+        if (item.given_runeword) {
+          // BW: d2s resolves the name in the right id space (corrupted runewords use their own)
+          let runeword_name = item.runeword_name ?? `Runeword #${item.runeword_id}`
           const runes = item.socketed_items.map(e => e.type_name.split(' ')[0]).join('');
           name = `\\gold;'${runes}'\\n${name}\\n\\gold;${personalizedName}${runeword_name}`;
         }
-        return name.split('\\n').map((d) => {
+        return utils.d2Colors(name).split('\\n').map((d) => {
           const s = d.replace(/\\(.*?);/gi, (result, match) => `</div><div class="${match}">`);
           return `<div>${s}</div>`;
         }).reverse().join('');
@@ -207,7 +208,7 @@
         if (!stat.description || stat.visible === false) {
           return null;
         }
-        const ds = stat.description.split('\\n');
+        const ds = utils.d2Colors(stat.description).split('\\n');
         return ds.map((d) => {
           const s = d.replace(/\\(.*?);/gi, (result, match) => `</div><div class="${match}">`);
           return `<div>${s}</div>`;

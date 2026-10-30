@@ -124,6 +124,7 @@
 <script>
 import Item from './Item.vue';
 import ItemStatsEditor from './ItemStatsEditor.vue';
+import utils from '../../utils.js';
 
 export default {
   name: 'ItemEditor',
@@ -147,20 +148,20 @@ export default {
         .fill({id: 0, n: "None"}, 0, 1)
         .filter(entry => entry && entry.n)
         //.map((entry, i) => { return {value: i, label: entry.n} }),
-        .map(entry => ({value: entry.id, label: entry.n})),
+        .map(entry => ({value: entry.id, label: utils.stripD2Colors(entry.n)})),
       magic_suffixes_options: window.constants.magic_suffixes
         .fill({id: 0, n: "None"}, 0, 1)
         .filter(entry => entry && entry.n)
-        .map(entry => ({value: entry.id, label: entry.n})),
+        .map(entry => ({value: entry.id, label: utils.stripD2Colors(entry.n)})),
       rare_names_options: window.constants.rare_names
         .fill({id: 0, n: "None"}, 0, 1)
         .filter(entry => entry && entry.n)
-        .map(entry => ({value: entry.id, label: entry.n})),
+        .map(entry => ({value: entry.id, label: utils.stripD2Colors(entry.n)})),
       unq_items: window.constants.unq_items
         .map((e,i)=> { return { i:i, v:e }}).filter(e => e.v != null && e.v.n != null),
       set_items_options: window.constants.set_items
         .filter(entry => entry && entry.n)
-        .map(entry => ({value: entry.id, label: entry.n})),
+        .map(entry => ({value: entry.id, label: utils.stripD2Colors(entry.n)})),
       armor_items: Object.entries(window.constants.armor_items).filter(e => e[1].n != null),
       weapon_items: Object.entries(window.constants.weapon_items).filter(e => e[1].n != null),
       other_items: Object.entries(window.constants.other_items).filter(e => e[1].n != null),
@@ -192,7 +193,7 @@ export default {
       }
       return Object.entries(constants)
           .filter((entry) => bases.includes(entry[0]))
-          .map((entry) => ({ value: entry[0], label: entry[1].n }));
+          .map((entry) => ({ value: entry[0], label: utils.stripD2Colors(entry[1].n) }));
     },
     findBasesInConstants(code, constants) {
       let bases = [];
@@ -253,8 +254,8 @@ export default {
       const own = entries.filter(e => e.c === this.item.type || e.id === currentId);
       const rest = entries.filter(e => !own.includes(e));
       return [
-        ...own.map(e => ({ value: e.id, label: e.n })),
-        ...rest.map(e => ({ value: e.id, label: `${e.n} [${e.c}]` })),
+        ...own.map(e => ({ value: e.id, label: utils.stripD2Colors(e.n) })),
+        ...rest.map(e => ({ value: e.id, label: `${utils.stripD2Colors(e.n)} [${e.c}]` })),
       ];
     },
     itemCanEthereal() {

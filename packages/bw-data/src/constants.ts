@@ -38,8 +38,17 @@ const grid = (row: string) => {
   if (!r) throw new Error(`inventory.txt: no row ${row}`);
   return { w: +r[col("gridX")], h: +r[col("gridY")] };
 };
+// Experience.txt: row "Level N" = experience needed to be at level N+1; "MaxLvl" row = cap.
+const expRows = buffers[Object.keys(buffers).find((k) => k.toLowerCase() === "experience.txt")!]
+  .split(/\r?\n/)
+  .map((l) => l.split("\t"));
+const maxLevel = +expRows.find((r) => r[0] === "MaxLvl")![1];
+const experience = expRows.filter((r) => /^\d+$/.test(r[0])).map((r) => +r[1]).slice(0, maxLevel);
+
 // "*2" rows are the 800x600 layout, which is what the game uses in LoD.
 constants.bw = {
+  maxLevel,
+  experience,
   grids: {
     inventory: grid("Amazon2"),
     stash: grid("Big Bank Page2"),
@@ -66,6 +75,8 @@ console.log(
       sets: count(constants.set_items),
       runewords: count(constants.runewords),
       grids: constants.bw.grids,
+      maxLevel,
+      expForMax: experience[maxLevel - 1],
       bytes: json.length,
     },
     null,

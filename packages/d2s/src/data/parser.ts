@@ -46,7 +46,9 @@ function readConstantData(buffers: any): types.IConstantData {
   constants.magic_suffixes = _readMagicNames(_getArray(buffers, "MagicSuffix.txt"), strings);
   constants.properties = _readProperties(_getArray(buffers, "Properties.txt"), strings);
   constants.magical_properties = _readItemStatCosts(_getArray(buffers, "ItemStatCost.txt"), strings);
-  constants.runewords = _readRunewords(_getArray(buffers, "Runes.txt"), strings);
+  const runewords = _readRunewords(_getArray(buffers, "Runes.txt"), strings);
+  constants.runewords = runewords.runewords;
+  constants.runewords_corrupted = runewords.corrupted;
   constants.set_items = _readSetOrUnqItems(_getArray(buffers, "SetItems.txt"), strings);
   constants.unq_items = _readSetOrUnqItems(_getArray(buffers, "UniqueItems.txt"), strings);
   const item_types = _readTypes(_getArray(buffers, "ItemTypes.txt"), strings);
@@ -84,6 +86,7 @@ function readConstantData(buffers: any): types.IConstantData {
     constants.magic_suffixes,
     constants.magical_properties,
     constants.runewords,
+    constants.runewords_corrupted,
     constants.set_items,
     constants.unq_items,
   ]) {
@@ -329,13 +332,25 @@ function _readProperties(tsv: any, strings: any): any {
   return arr;
 }
 
-function _readRunewords(tsv: any, strings: any): any[] {
-  const arr = [] as any[];
+// Saved runeword id (12 bits) -> Runes.txt row. Two id spaces, told apart by the 4 bits after
+// the id (item.runeword_flags), verified on BlackWolf saves (docs/findings.md "Runewords"):
+//  - flags 5 (vanilla): id from the "RunewordN" name: N + 26, or N + 25 above 75 (no Runeword75)
+//  - flags 3 (BlackWolf corrupted runes): id = Runes.txt data row index - 82
+const CORRUPTED_RUNEWORD_ROW_OFFSET = 82;
+
+function _readRunewords(tsv: any, strings: any): { runewords: any[]; corrupted: any[] } {
+  const runewords = [] as any[];
+  const corrupted = [] as any[];
   const cName = tsv.header.indexOf("Name");
+  const cRuneName = tsv.header.indexOf("Rune Name");
+  const cRunes = [1, 2, 3, 4, 5, 6].map((k) => tsv.header.indexOf(`Rune${k}`));
   for (let i = 1; i < tsv.lines.length; i++) {
     const name = tsv.lines[i][cName];
-    // TODO(bw): vanilla-only id mapping; mod rows like "cRuneword167" are skipped until verified
-    if (name && /^Runeword\d+$/.test(name)) {
+    if (!name) continue;
+    const o = { n: strings[name] ?? tsv.lines[i][cRuneName] } as any;
+    const runes = cRunes.map((c) => tsv.lines[i][c]).filter(Boolean);
+    if (runes.length) o.r = runes;
+    if (/^Runeword\d+$/.test(name)) {
       let id = +name.substring(8);
       //TODO: why?
       if (id > 75) {
@@ -343,12 +358,13 @@ function _readRunewords(tsv: any, strings: any): any[] {
       } else {
         id += 26;
       }
-      arr[id] = {
-        n: strings[tsv.lines[i][cName]],
-      };
+      runewords[id] = o;
+    } else {
+      const id = i - 1 - CORRUPTED_RUNEWORD_ROW_OFFSET;
+      if (id >= 0) corrupted[id] = o;
     }
   }
-  return arr;
+  return { runewords, corrupted };
 }
 
 function _readTypes(tsv: any, strings: any): any {

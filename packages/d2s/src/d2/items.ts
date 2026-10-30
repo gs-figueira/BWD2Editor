@@ -241,10 +241,12 @@ export async function readItem(
       if (item.runeword_id == 2718) {
         item.runeword_id = 48;
       }
-      if (constants.runewords[item.runeword_id]) {
-        item.runeword_name = constants.runewords[item.runeword_id]!.n!;
+      // vanilla always writes 5 here; BlackWolf runewords made with corrupted runes (t01..) use 3
+      item.runeword_flags = reader.ReadUInt8(4);
+      const rw = runewordConstant(item, constants);
+      if (rw) {
+        item.runeword_name = rw.n;
       }
-      reader.ReadUInt8(4);
     }
 
     if (item.personalized) {
@@ -410,7 +412,7 @@ export async function writeItem(
         runeword_id = 48;
       }
       writer.WriteUInt16(runeword_id, 12);
-      writer.WriteUInt8(5, 4); //always 5?
+      writer.WriteUInt8(item.runeword_flags ?? 5, 4); //vanilla: always 5
     }
 
     if (item.personalized) {
@@ -765,4 +767,12 @@ function _GetItemTXT(item: types.IItem, constants: types.IConstantData): any {
   } else if (constants.other_items[item.type]) {
     return constants.other_items[item.type];
   }
+}
+
+/** Runes.txt entry for an item's runeword id, in the id space chosen by runeword_flags. */
+export function runewordConstant(item: types.IItem, constants: types.IConstantData): any {
+  if (item.runeword_flags === 3 && constants.runewords_corrupted) {
+    return constants.runewords_corrupted[item.runeword_id];
+  }
+  return constants.runewords[item.runeword_id];
 }

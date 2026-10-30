@@ -17,6 +17,8 @@ export interface IConstantData {
   properties: any;
   magical_properties: any[];
   runewords: any[];
+  /** BlackWolf corrupted-rune runewords (runeword_flags 3), by saved id */
+  runewords_corrupted?: any[];
   set_items: any[];
   unq_items: any[];
 }
@@ -357,6 +359,8 @@ export interface IItem {
   magic_suffix: number;
   magic_suffix_name: string;
   runeword_id: number;
+  /** 4 bits after the runeword id: 5 in vanilla, other values on BlackWolf corrupted-rune runewords */
+  runeword_flags?: number;
   runeword_name: string;
   runeword_attributes: IMagicProperty[];
   set_id: number;

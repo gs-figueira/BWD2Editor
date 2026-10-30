@@ -379,13 +379,13 @@ function _descFunc(
       break;
     }
     case 15: {
-      descString = _sprintf(descString, property.values[2], property.values[0], constants.skills[property.values[1]].s);
+      descString = _sprintf(descString, property.values[2], property.values[0], _skillName(constants, property.values[1]));
       property.description = `${descString}`;
       break;
     }
     case 16: {
       property.description = descString.replace(/%d/, v.toString());
-      property.description = property.description.replace(/%s/, constants.skills[property.values[0]].s);
+      property.description = property.description.replace(/%s/, _skillName(constants, property.values[0]));
       break;
     }
     case 17: {
@@ -428,12 +428,12 @@ function _descFunc(
         descString = descString.replace(/%d/gi, () => {
           return property.values[2 + count++].toString();
         });
-        property.description = `Level ${property.values[0]} ${constants.skills[property.values[1]].s} ${descString}`;
+        property.description = `Level ${property.values[0]} ${_skillName(constants, property.values[1])} ${descString}`;
       } else {
         property.description = _sprintf(
           descString,
           property.values[0],
-          constants.skills[property.values[1]].s,
+          _skillName(constants, property.values[1]),
           property.values[2],
           property.values[3]
         );
@@ -442,7 +442,7 @@ function _descFunc(
     }
     case 27: {
       const skill = constants.skills[property.values[0]];
-      const clazz = _classFromCode(skill.c, constants);
+      const clazz = _classFromCode(skill?.c, constants);
       if (descString) {
         property.description = _sprintf(descString, v, skill?.s, clazz?.co);
       } else {
@@ -604,4 +604,10 @@ function _refreshNames(item: types.IItem, constants: types.IConstantData) {
   if (item.unique_id !== undefined) item.unique_name = constants.unq_items[item.unique_id]?.n ?? null;
   if (item.rare_name_id !== undefined) item.rare_name = constants.rare_names[item.rare_name_id]?.n ?? null;
   if (item.rare_name_id2 !== undefined) item.rare_name2 = constants.rare_names[item.rare_name_id2]?.n ?? null;
+}
+
+// BW: mods have skill ids without a skills.txt description (and the editor's new-stat default
+// can point at one); never throw while building a description
+function _skillName(constants: types.IConstantData, id: number): string {
+  return constants.skills[id]?.s ?? `Skill #${id}`;
 }

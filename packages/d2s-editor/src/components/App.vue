@@ -289,7 +289,7 @@
                       <div class="row">
                         <button type="button" @click="unlockHell" class="btn btn-primary">Unlock Hell</button>
                         <button type="button" @click="unlockAllWPs" class="btn btn-primary">Unlock All WPs</button>
-                        <button type="button" @click="setLvl99" class="btn btn-primary">Set Level 99</button>
+                        <button type="button" @click="setLvl99" class="btn btn-primary">Set Max Level ({{ maxLevel }})</button>
                         <button type="button" @click="setAllSkills20" class="btn btn-primary">Set All Skills 20</button>
                         <button type="button" @click="unlockQs" class="btn btn-primary">Complete Skill/Stat Qs</button>
                         <button type="button" @click="maxGold" class="btn btn-primary">Max Gold</button>
@@ -366,6 +366,7 @@
         load: null,
         notifications: [],
         grid: utils.grids(),
+        maxLevel: window.constants_96?.constants?.bw?.maxLevel ?? 99,
         location: {},
         theme: localStorage.getItem('theme')
       };
@@ -917,7 +918,8 @@
         }
       },
       setLvl99() {
-        this.save.header.level = 99;
+        // BW: the mod's level cap (Experience.txt MaxLvl); Stats.vue sets the matching experience
+        this.save.header.level = this.maxLevel;
       },
       setAllSkills20() {
         for (var s of this.save.skills) {

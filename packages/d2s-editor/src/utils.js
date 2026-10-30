@@ -22,6 +22,16 @@ const colors = {
   bwht: 20,
 };
 
+// BW: D2 color codes (ÿcN) -> the editor's "\\class;" markup used by Item.vue
+const d2ColorClasses = { 0: 'white', 1: 'red', 2: 'green', 3: 'blue', 4: 'gold', 5: 'grey', 6: 'black', 7: 'gold', 8: 'orange', 9: 'yellow', ';': 'blue', ':': 'green' };
+function d2Colors(text) {
+  if (!text) return text;
+  return String(text).replace(/ÿc(.)/g, (m, code) => `\\${d2ColorClasses[code] || 'white'};`);
+}
+function stripD2Colors(text) {
+  return text ? String(text).replace(/ÿc./g, '') : text;
+}
+
 // BW: "+# to All Skills (item_allskills)" instead of the bare ItemStatCost code
 function statLabel(stat) {
   const desc = (stat.dP || stat.dgP || "")
@@ -55,6 +65,8 @@ export default {
   colormaps: colormaps,
   grids: grids,
   statLabel: statLabel,
+  d2Colors: d2Colors,
+  stripD2Colors: stripD2Colors,
   b64ToArrayBuffer(base64) {
     var bin = window.atob(base64);
     var len = bin.length;
