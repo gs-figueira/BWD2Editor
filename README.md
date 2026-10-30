@@ -17,6 +17,10 @@ Feito para testar builds sem precisar upar vários personagens a cada ladder.
 - Runewords, incluindo as corrompidas
 - Quests e waypoints
 
+## Limitações
+
+- Alguns items podem ser criados, mas seu funcionamento depende de diferenças entre o servidor e versão offline da mod. Um exemplo são o pets, seus items podem ser criados pelo editor e depois craftados normalmente pelo cubo, mas as skills nao fazem nada, pois provavelemnte são desativados offline ou precisam de um funcionamento exclusivo do realm.
+
 ## Como usar
 
 1. Abra o site do editor (GitHub Pages deste repositório).

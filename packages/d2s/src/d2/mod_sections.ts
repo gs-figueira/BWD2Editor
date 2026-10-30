@@ -3,9 +3,10 @@ import { BitReader } from "../binary/bitreader";
 import { BitWriter } from "../binary/bitwriter";
 import { classSkillIds } from "./skills";
 
-// BlackWolf (BaseMod/custom DLL) saves add sections between the attributes ("gf") and
-// skills ("if"), e.g. "XS\0\0IK\0\0". Their layout is not known yet, so the raw bytes are
-// kept and written back unchanged. The "if" header is only accepted when the class skill
+// BlackWolf saves add sections between the attributes ("gf") and skills ("if"):
+// "XS" / "IK", the server's extra stash and inventory tabs. They only work on the server,
+// so offline saves carry them empty ("XS\0\0IK\0\0"); the raw bytes are kept and written
+// back unchanged. The "if" header is only accepted when the class skill
 // bytes after it are followed by the item list ("JM"), so data containing "if" can't fool it.
 export async function readModSections(char: types.ID2S, reader: BitReader, constants: types.IConstantData) {
   const start = reader.offset >>> 3;
