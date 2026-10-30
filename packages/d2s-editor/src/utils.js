@@ -39,7 +39,11 @@ function statLabel(stat) {
     .replace(/\\n|\n/g, " ")
     .replace(/%\+?d|%s|%\d/g, "#")
     .trim();
-  return desc ? `${desc} (${stat.s})` : stat.s;
+  // grouped stats show in game as one line (e.g. demon + undead damage = "Damage to Monsters");
+  // name the group so searching for the in-game text finds its members
+  const group = (stat.dgP || "").replace(/ÿc./g, "").replace(/%\+?d|%s|%\d/g, "#").trim();
+  const label = desc ? `${desc} (${stat.s})` : stat.s;
+  return group && group !== desc ? `${label} — group: ${group}` : label;
 }
 
 // BW: inventory/stash/cube sizes come from the mod's inventory.txt (constants.bw.grids)

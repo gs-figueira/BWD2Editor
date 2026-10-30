@@ -651,7 +651,8 @@ function _readItemStatCosts(tsv: any, strings: any): any[] {
       if (tsv.lines[i][cDgrpFunc]) o.dgF = +tsv.lines[i][cDgrpFunc];
       if (tsv.lines[i][cDgrpVal]) o.dgV = +tsv.lines[i][cDgrpVal];
       if (tsv.lines[i][cDgrpstrpos]) o.dgP = strings[tsv.lines[i][cDgrpstrpos]];
-      if (tsv.lines[i][cDgrpstrneg]) o.dN = strings[tsv.lines[i][cDgrpstrneg]];
+      // BW: upstream wrote this into dN, clobbering the stat's own negative description
+      if (tsv.lines[i][cDgrpstrneg]) o.dgN = strings[tsv.lines[i][cDgrpstrneg]];
       if (tsv.lines[i][cDgrpstr2]) o.dg2 = strings[tsv.lines[i][cDgrpstr2]];
       if (tsv.lines[i][cOp]) o.o = +tsv.lines[i][cOp];
       if (tsv.lines[i][cOpParam]) o.op = +tsv.lines[i][cOpParam];

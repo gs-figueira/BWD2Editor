@@ -247,7 +247,7 @@
                             <Stash :items.sync="stash" @item-selected="onSelect" @item-event="onEvent" :id="'Stash'"
                               :contextMenu="$refs.contextMenu">
                             </Stash>
-                            <Mercenary :items.sync="mercenary" @item-selected="onSelect"
+                            <Mercenary :items.sync="mercenary" @item-selected="onSelect" @item-event="onEvent"
                               :contextMenu="$refs.contextMenu">
                             </Mercenary>
                             <div class="cube">
@@ -516,8 +516,11 @@
         //this.updateLocation(this.selected);
       },
       findIndex(list, i) {
+        // BW: char and merc items share equip positions (both have a slot-1 helm), so compare the
+        // item id too when both have one (simple items like runes have none)
         return list.findIndex(item =>
-          item.location_id == i.location_id
+          (item.id === undefined || i.id === undefined || item.id === i.id)
+          && item.location_id == i.location_id
           && item.equipped_id == i.equipped_id
           && item.position_x == i.position_x
           && item.position_y == i.position_y
@@ -559,8 +562,8 @@
           let element = document.getElementById(e.id);
           element.style.backgroundColor = ""; element.style.width = ""; element.style.height = "";
           if(window.uuid == e.uuid) {
-            let idx = this.findIndex(this.save.items, e.item);
-            this.onMove(this.save.items[idx], e);
+            // BW: the dragged item can live in the char list or the merc list, and so can the target
+            this.moveBetweenLists(e);
           } else {
             //copy to another tab
             if(this.onMove(e.item, e)) {
@@ -588,6 +591,27 @@
           } else {
             this.paste(e.item);
           }
+        }
+      },
+      moveBetweenLists(e) {
+        const lists = [this.save.items, this.save.merc_items || (this.save.merc_items = [])];
+        let from = lists.find(list => this.findIndex(list, e.item) !== -1);
+        if (!from) return;
+        const idx = this.findIndex(from, e.item);
+        const item = from[idx];
+        const to = e.location.merc ? this.save.merc_items : this.save.items;
+        if (e.location.location == 1) {
+          // one item per equip slot; don't silently stack two items in the same slot
+          const occupant = to.find(i => i !== item && i.location_id === 1 && i.equipped_id === e.location.equipped_location);
+          if (occupant) {
+            this.notifications.push({ alert: "alert alert-warning", message: `That slot already has ${occupant.type_name}. Move or delete it first.` });
+            return;
+          }
+        }
+        if (!this.onMove(item, e)) return;
+        if (from !== to) {
+          from.splice(idx, 1);
+          to.push(item);
         }
       },
       onMove(item, e) {

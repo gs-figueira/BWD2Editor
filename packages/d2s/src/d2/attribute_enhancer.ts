@@ -170,17 +170,20 @@ function _enhanceAttributeDescription(
   if (!_magic_attributes) return [];
 
   const magic_attributes: types.IMagicProperty[] = [..._magic_attributes.map((attr) => ({ ...attr }))];
-  const dgrps = [0, 0, 0];
-  const dgrpsVal = [0, 0, 0];
+  // BW: description groups (ItemStatCost dgrp) collapse into one line ("All Resistances +X",
+  // "+X% Damage to Monsters") when every stat of the group is present with the same value.
+  // Vanilla d2s hardcoded 3 groups of 4; the mod has groups 1-8 and a group of 2 (dgrp 7).
+  const dgrps = {} as { [dg: number]: number };
+  const dgrpsVal = {} as { [dg: number]: number };
   for (const property of magic_attributes) {
     const prop = constants.magical_properties[property.id];
     const v = property.values[property.values.length - 1];
-    if (prop.dg) {
-      if (dgrpsVal[prop.dg - 1] === 0) {
-        dgrpsVal[prop.dg - 1] = v;
+    if (prop && prop.dg) {
+      if (dgrpsVal[prop.dg] === undefined) {
+        dgrpsVal[prop.dg] = v;
       }
-      if (dgrpsVal[prop.dg - 1] - v === 0) {
-        dgrps[prop.dg - 1]++;
+      if (dgrpsVal[prop.dg] === v) {
+        dgrps[prop.dg] = (dgrps[prop.dg] ?? 0) + 1;
       }
     }
   }
@@ -218,8 +221,8 @@ function _enhanceAttributeDescription(
     }
     let descVal = prop.dV;
     let desc2 = prop.d2;
-    if (prop.dg && dgrps[prop.dg - 1] === 4) {
-      v = dgrpsVal[prop.dg - 1];
+    if (prop.dg && dgrps[prop.dg] === _dgrpSize(constants, prop.dg)) {
+      v = dgrpsVal[prop.dg];
       descString = v >= 0 ? prop.dgP : prop.dgN ? prop.dgN : prop.dgP;
       descVal = prop.dgV;
       descFunc = prop.dgF;
@@ -610,4 +613,17 @@ function _refreshNames(item: types.IItem, constants: types.IConstantData) {
 // can point at one); never throw while building a description
 function _skillName(constants: types.IConstantData, id: number): string {
   return constants.skills[id]?.s ?? `Skill #${id}`;
+}
+
+const _dgrpSizes = new WeakMap<object, { [dg: number]: number }>();
+function _dgrpSize(constants: types.IConstantData, dg: number): number {
+  let sizes = _dgrpSizes.get(constants.magical_properties);
+  if (!sizes) {
+    sizes = {};
+    for (const p of constants.magical_properties) {
+      if (p && p.dg) sizes[p.dg] = (sizes[p.dg] ?? 0) + 1;
+    }
+    _dgrpSizes.set(constants.magical_properties, sizes);
+  }
+  return sizes[dg] ?? 0;
 }
