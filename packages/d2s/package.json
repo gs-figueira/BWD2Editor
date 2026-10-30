@@ -9,7 +9,7 @@
     "test": "mocha -r ts-node/register tests/**/*.spec.ts --timeout 10000",
     "web": "webpack",
     "prepack": "npm run build",
-    "prepare": "npm run build && husky install",
+    "prepare": "npm run build",
     "prepublish": "npm run build",
     "preversion": "npm test",
     "postversion": "git push && git push --tags",

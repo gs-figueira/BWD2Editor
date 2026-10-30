@@ -2,7 +2,11 @@
   <div>
     <div ref="itemRef" tabindex="0" :class="itemClass" v-on:dragstart="dragStart">
       <div :class="innerClass">
-        <img :src="item.src" :class="{ ethereal: item.ethereal}" />
+        <img v-if="item.src" :src="item.src" :class="{ ethereal: item.ethereal}" />
+        <!-- BW: no Blizzard art on the published site; vanilla items are labeled blocks -->
+        <div v-else class="bw-item-block" :class="[itemNameClass(item), { ethereal: item.ethereal }]">
+          <span>{{ blockLabel }}</span>
+        </div>
         <div v-if="item.total_nr_of_sockets && tooltipShown" class="sockets">
           <div :style="socketStyle(idx)" class="socket"
             :class="{ 'empty-socket': !item.socketed_items || !item.socketed_items[idx-1]}"
@@ -68,6 +72,9 @@
           clazz += ` x-${this.item.position_x} y-${this.item.position_y}`;
         }
         return clazz;
+      },
+      blockLabel() {
+        return utils.stripD2Colors(this.item.type_name || this.item.type || '?');
       },
       innerClass() {
         let clazz = `${this.clazz ? this.clazz : 'inner'} w-${this.item.inv_width} h-${this.item.inv_height}`

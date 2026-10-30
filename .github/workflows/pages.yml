@@ -1,0 +1,73 @@
+# Build the editor and publish it to GitHub Pages on every push to main.
+# Mod data (public/d2/constants_bw.bundle.js, public/items/) is generated locally with
+# tools/build_editor_data.sh and committed; CI only compiles d2s + the editor.
+name: Build & deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            packages/d2s/package-lock.json
+            packages/d2s-editor/package-lock.json
+
+      - name: d2s — install, compile, test, bundle
+        working-directory: packages/d2s
+        run: |
+          npm ci --ignore-scripts
+          npx tsc
+          npm test
+          NODE_OPTIONS=--openssl-legacy-provider npx webpack --config webpack.bw.config.js
+          mkdir -p ../d2s-editor/public/d2
+          cp dist/d2s.bundle.min.js ../d2s-editor/public/d2/
+
+      - name: editor — install and build
+        working-directory: packages/d2s-editor
+        run: |
+          test -f public/d2/constants_bw.bundle.js || { echo "::error::constants_bw.bundle.js missing — run tools/build_editor_data.sh and commit it"; exit 1; }
+          npm ci --ignore-scripts
+          npx vue-cli-service build --skip-plugins @vue/cli-plugin-eslint
+
+      - name: guard — no game files in the published site
+        working-directory: packages/d2s-editor/dist
+        run: |
+          if [ -d data ] || find . -iname '*.dc6' -o -iname '*.mpq' -o -iname '*.d2s' -o -iname 'pal.dat' | grep -q .; then
+            echo "::error::game files found in dist/"; exit 1
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: packages/d2s-editor/dist
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

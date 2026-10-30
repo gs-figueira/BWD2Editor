@@ -1,13 +1,12 @@
 <template>
   <ContextMenu :ref="'contextMenu'" @option-clicked="optionClicked"></ContextMenu>
   <div @click.native="rootClick">
-    <link v-if="theme == 'd2'" href="css/theme.css" rel="stylesheet" />
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="octicon octicon-clippy navbar-brand">
-        <i class="fa fa-fw fa-github"></i>
-        <a href="https://github.com/dschu012">dschu012</a> / <a class="font-weight-bold"
-          href="https://github.com/dschu012/d2s-editor">d2s-editor</a>
+        <span class="font-weight-bold">BWD2Editor</span>
+        <small class="text-muted ml-2">BlackWolf offline character editor · based on
+          <a href="https://github.com/dschu012/d2s-editor" target="_blank" rel="noopener">dschu012/d2s-editor</a></small>
       </div>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,8 +67,8 @@
           <div class="card bg-light">
             <div class="card-body">
               <div class="alert alert-primary" role="alert">
-                This editor is still a work in progress. Some things may not work. Found a bug? <a
-                  href="https://github.com/dschu012/d2s-editor/issues/new">Report it.</a>
+                Offline characters only. <strong>Always back up your .d2s before saving over it.</strong>
+                Item art is shown only for BlackWolf's own items; other items appear as labeled blocks.
               </div>
 
               <form id="d2sForm">
@@ -377,10 +376,20 @@
       d2s.setConstantData(96, window.constants_96.constants); //1.10-1.14d
       window.constants = window.constants_96.constants;
 
-      if (window.palettes == undefined) {
+      // BW: game graphics (.dc6 + palettes in public/data) exist only on a local install,
+      // extracted from the player's own MPQs; the published site has none of them and falls back
+      // to pre-rendered mod PNGs / placeholders. ?gfx=published simulates the published site.
+      window.bwLocalGfx = false;
+      const forcePublished = new URLSearchParams(window.location.search).get('gfx') === 'published';
+      let palResponse = null;
+      if (!forcePublished) {
+        try { palResponse = await fetch(`data/global/palette/act1/pal.dat`); } catch (e) { palResponse = null; }
+      }
+      if (window.palettes == undefined && palResponse?.ok) {
+        window.bwLocalGfx = true;
         window.palettes = {};
         window.palettes["ACT1"] = [];
-        let response = await fetch(`data/global/palette/act1/pal.dat`);
+        let response = palResponse;
         let buffer = new Uint8Array(await response.arrayBuffer());
         for (let i = 0; i < 256; i += 1) {
           window.palettes["ACT1"].push([buffer[i * 3 + 2], buffer[i * 3 + 1], buffer[i * 3]]);

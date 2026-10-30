@@ -1,11 +1,17 @@
-"""Extract item graphics (.dc6) and palettes the editor renders with.
+"""Extract item graphics (.dc6) and palettes from the game's MPQs.
 
-Later archives override earlier ones (d2data < d2exp < Patch_D2), like the game's
-MPQ priority. Paths are lowercased because the editor is served from a case-sensitive
-filesystem and the MPQs mix "invleg.DC6" / "Palette/" casing.
+Writes, under <repo>:
+  reference/gfx/<archive>/data/global/...      one copy per MPQ, so tools can tell mod art
+                                               (Patch_D2) from Blizzard art (d2data/d2exp)
+  packages/d2s-editor/public/data/global/...   merged (d2data < d2exp < Patch_D2, like the
+                                               game's MPQ priority) for LOCAL use only. It's
+                                               gitignored and never published.
+
+Paths are lowercased because the editor is served from a case-sensitive filesystem and
+the MPQs mix "invleg.DC6" / "Palette/" casing.
 
 Run from ~/Projetos/mpq_extractor so the library resolves:
-    uv run python <repo>/tools/extract_gfx.py <game-dir> <repo>/packages/d2s-editor/public
+    uv run python <repo>/tools/extract_gfx.py <game-dir> <repo>
 """
 
 import sys
@@ -17,25 +23,34 @@ ARCHIVES = ["d2data.mpq", "d2exp.mpq", "Patch_D2.mpq"]
 WANTED = ("data\\global\\items\\", "data\\global\\palette\\act1\\")
 
 
-def main(game_dir: str, out_dir: str) -> None:
-    out = Path(out_dir).resolve()
-    count = 0
+def safe_dest(root: Path, mpq_name: str) -> Path | None:
+    parts = mpq_name.lower().split("\\")
+    if ".." in parts or "" in parts:
+        return None
+    dest = root.joinpath(*parts)
+    return dest if dest.resolve().is_relative_to(root) else None
+
+
+def main(game_dir: str, repo: str) -> None:
+    repo_root = Path(repo).resolve()
+    merged = repo_root / "packages/d2s-editor/public"
     for name in ARCHIVES:
+        per_archive = (repo_root / "reference/gfx" / name.lower().removesuffix(".mpq")).resolve()
+        count = 0
         with MPQArchive(Path(game_dir) / name) as mpq:
             for f in mpq.list_files("*"):
                 low = str(f).lower()
                 if not low.startswith(WANTED) or low.endswith("\\"):
                     continue
-                parts = low.split("\\")
-                if ".." in parts or "" in parts:
-                    continue
-                dest = out.joinpath(*parts)
-                if not dest.resolve().is_relative_to(out):
-                    continue
-                dest.parent.mkdir(parents=True, exist_ok=True)
-                dest.write_bytes(mpq.read_file(f))
+                data = mpq.read_file(f)
+                for root in (per_archive, merged.resolve()):
+                    dest = safe_dest(root, str(f))
+                    if dest is None:
+                        continue
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    dest.write_bytes(data)
                 count += 1
-        print(f"{name}: done ({count} files written so far)")
+        print(f"{name}: {count} files")
 
 
 if __name__ == "__main__":

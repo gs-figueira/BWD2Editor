@@ -5,7 +5,9 @@
 # and run the byte-identical round-trip check on reference/saves.
 #
 # usage: tools/build_editor_data.sh [mod-version]   (default 4.2.1)
-# Item graphics are a separate one-off step: tools/extract_gfx.py (see CLAUDE.md).
+# Item graphics: run tools/extract_gfx.py first (per-MPQ copies in reference/gfx); this script
+# then pre-renders the mod-only art to public/items (published) — Blizzard art never is.
+# Commit public/d2/constants_bw.bundle.js and public/items/ afterwards: CI publishes them.
 set -euo pipefail
 
 VER="${1:-4.2.1}"
@@ -30,8 +32,15 @@ echo "== bw-data: txt + constants"
 node "$ROOT/packages/bw-data/src/cli.ts" "$MOD" "$OUT/txt" >/dev/null
 node "$ROOT/packages/bw-data/src/constants.ts" "$OUT/txt" "$OUT"
 
-echo "== round-trip"
-node "$ROOT/packages/bw-data/src/roundtrip.ts" "$OUT/constants.json" "$ROOT"/reference/saves/*.d2s
+if [ -d "$ROOT/reference/gfx/patch_d2" ]; then
+  echo "== mod item art -> public/items"
+  node "$ROOT/packages/bw-data/src/gfx.ts" "$ROOT/reference/gfx" "$ROOT/packages/d2s-editor/public/items" | grep -E '"(written|modOnly)"'
+fi
+
+if compgen -G "$ROOT/reference/saves/*.d2s" >/dev/null; then
+  echo "== round-trip (private reference saves)"
+  node "$ROOT/packages/bw-data/src/roundtrip.ts" "$OUT/constants.json" "$ROOT"/reference/saves/*.d2s
+fi
 
 echo "== editor bundles"
 mkdir -p "$PUBLIC"

@@ -22,6 +22,18 @@ const colors = {
   bwht: 20,
 };
 
+// BW: names of the mod's own item graphics, pre-rendered to public/items/*.png by bw-data gfx.ts
+let itemPngIndexPromise = null;
+function itemPngIndex() {
+  if (!itemPngIndexPromise) {
+    itemPngIndexPromise = fetch('items/index.json')
+      .then(r => (r.ok ? r.json() : []))
+      .catch(() => [])
+      .then(list => new Set(list));
+  }
+  return itemPngIndexPromise;
+}
+
 // BW: D2 color codes (ÿcN) -> the editor's "\\class;" markup used by Item.vue
 const d2ColorClasses = { 0: 'white', 1: 'red', 2: 'green', 3: 'blue', 4: 'gold', 5: 'grey', 6: 'black', 7: 'gold', 8: 'orange', 9: 'yellow', ';': 'blue', ':': 'green' };
 function d2Colors(text) {
@@ -91,7 +103,14 @@ export default {
     }
     return window.btoa(binary);
   },
+  // BW: returns an image URL for the item, or null (the item is then drawn as a labeled block)
   async b64PNGFromDC6(item) {
+    if (!item.inv_file) return null;
+    if (!window.bwLocalGfx) {
+      const published = await itemPngIndex();
+      const name = item.inv_file.toLowerCase();
+      return published.has(name) ? `items/${name}.png` : null;
+    }
     const response = await fetch(`data/global/items/${item.inv_file.toLowerCase()}.dc6`, { signal: AbortSignal.timeout(1500) });
     if (response.status !== 200) {
       return null;
