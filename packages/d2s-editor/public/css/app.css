@@ -1059,7 +1059,8 @@ div.settings .form-check-input {
 }
 /* BW: mod names are long; don't truncate affix/unique/stat selects */
 .item-options .multiselect { min-width: 260px; }
-.item-stats .col-md-3 { flex: 0 0 auto; max-width: none; min-width: 340px; }
+.item-stats .col-md-3 { flex: 0 0 360px; max-width: 360px; }
+.item-stats .form-row { flex-wrap: nowrap; align-items: flex-start; }
 /* BW: merc panel = character panel without the inventory grid (crop the art above the grid) */
 .merc-inventory {
   height: calc(var(--grid-size) * 7.4);
