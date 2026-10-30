@@ -1082,7 +1082,14 @@ body { background-color: #121110; }
   outline: 1px solid #6b5634;
   outline-offset: -1px;
 }
-.d2p-slot-head.d2p-slot-background { background: none; }
+/* the helm slot is drawn by its inner div (the outer span has no box), always show it */
+.equipped > span.d2p-slot-head > div.d2p-slot-head {
+  position: absolute;
+  left: 130px; top: 13px; width: 60px; height: 60px;
+  background: #0b0a08 none;
+  outline: 1px solid #6b5634;
+  outline-offset: -1px;
+}
 /* grid cells */
 .d2p-InventoryGrid > .cell > .cell { background-color: #0b0a08; }
 /* item without art: a block the size of the item, colored like its name */
@@ -1106,3 +1113,10 @@ body { background-color: #121110; }
 }
 .bw-item-block.ethereal { opacity: 0.6; }
 .tippy-box { font-family: "Cinzel", Georgia, serif; }
+/* blocks fill the equipment slot they sit in (images keep their own size) */
+.equipped > span:not(.d2p-slot-head) > div:has(.bw-item-block),
+.equipped > span:not(.d2p-slot-head) > div:has(.bw-item-block) > .item,
+.equipped > span.d2p-slot-head .item:has(.bw-item-block),
+.equipped .inner:has(.bw-item-block) {
+  height: 100%;
+}
